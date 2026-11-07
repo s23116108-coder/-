@@ -1,0 +1,6 @@
+{
+  "name": "黑犬四視圖設計與 3D 檢視工作站 (Black Dog 4-View Character Studio)",
+  "description": "專業黑犬四視圖（前視、後視、左側視、右側視）角色設計藍圖、3D 旋轉檢視台、比例標註尺與細節檢驗工具。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
