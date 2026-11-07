@@ -18,6 +18,7 @@ import {
   Minimize2,
   Timer,
   AlertTriangle,
+  Zap,
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
@@ -134,6 +135,10 @@ export const CrossyRoadGame: React.FC = () => {
   const [currentColorType, setCurrentColorType] = useState<Lane['type']>('grass');
   const lastUiTimeRef = useRef(20.0);
   const lastUiTypeRef = useRef<Lane['type']>('grass');
+
+  // Red Light Crossing 1.1x Vehicle Acceleration Mechanic
+  const [speedMultiplier, setSpeedMultiplier] = useState(1.0);
+  const trafficSpeedMultiplierRef = useRef(1.0);
 
   // Floating notifications
   const [floatingNotice, setFloatingNotice] = useState<{
@@ -559,7 +564,8 @@ export const CrossyRoadGame: React.FC = () => {
 
       // Spawn moving vehicles
       const direction = Math.random() < 0.5 ? 1 : -1;
-      const speed = (Math.random() * 2.2 + 2.5) * direction;
+      const baseSpeed = (Math.random() * 2.2 + 2.5) * direction;
+      const speed = baseSpeed * trafficSpeedMultiplierRef.current;
       lane.direction = direction;
       lane.speed = speed;
 
@@ -732,6 +738,8 @@ export const CrossyRoadGame: React.FC = () => {
     setCurrentColorType('grass');
     lastUiTimeRef.current = 20.0;
     lastUiTypeRef.current = 'grass';
+    setSpeedMultiplier(1.0);
+    trafficSpeedMultiplierRef.current = 1.0;
 
     // Generate initial 25 rows
     for (let z = -3; z <= 22; z++) {
@@ -799,11 +807,28 @@ export const CrossyRoadGame: React.FC = () => {
           setCoins(newCoinBalance);
           setRedLightViolations((v) => v + 1);
 
+          // NEW MECHANIC: 每次紅燈時過馬路車輛速度加快 1.1 倍!
+          const newMultiplier = trafficSpeedMultiplierRef.current * 1.1;
+          trafficSpeedMultiplierRef.current = newMultiplier;
+          setSpeedMultiplier(newMultiplier);
+
+          // Accelerate all existing vehicles on all road lanes immediately!
+          lanesRef.current.forEach((lane) => {
+            if (lane.vehicles) {
+              lane.vehicles.forEach((v) => {
+                v.speed *= 1.1;
+              });
+            }
+            if (lane.speed) {
+              lane.speed *= 1.1;
+            }
+          });
+
           if (soundEnabledRef.current) {
             playSound('red_light_penalty');
           }
 
-          triggerNotice('闖紅燈違規！扣除 1 金幣 ⚠️', 'penalty');
+          triggerNotice(`闖紅燈！扣 1 金幣 · 車速加快至 ${newMultiplier.toFixed(2)}x ⚡`, 'penalty');
         } else {
           // GREEN OR YELLOW: SAFE PASSAGE!
           setSafeCrossings((c) => c + 1);
@@ -1268,8 +1293,24 @@ export const CrossyRoadGame: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Coins & Audio Controls */}
-        <div className="flex items-center gap-3">
+        {/* Right Coins, Speed Multiplier & Audio Controls */}
+        <div className="flex items-center gap-2.5">
+          {/* Speed Multiplier Badge */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all ${
+              speedMultiplier > 1.0
+                ? 'bg-amber-950/70 border-amber-500/60 text-amber-300 shadow-md shadow-amber-950/40'
+                : 'bg-slate-900 border-slate-800 text-slate-400'
+            }`}
+            title={`目前車輛速度倍率：${speedMultiplier.toFixed(2)}x (每次闖紅燈過馬路加速 1.1 倍)`}
+          >
+            <Zap className={`w-3.5 h-3.5 ${speedMultiplier > 1.0 ? 'text-amber-400 fill-amber-400 animate-pulse' : 'text-slate-500'}`} />
+            <span>車速:</span>
+            <span className={speedMultiplier > 1.0 ? 'text-amber-300 font-black' : 'text-slate-300'}>
+              {speedMultiplier.toFixed(2)}x
+            </span>
+          </div>
+
           {/* Coins Counter */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/40 border border-amber-500/40 text-amber-300 font-mono font-bold text-sm shadow-inner">
             <Coins className="w-4 h-4 text-amber-400 animate-spin-slow" />
@@ -1401,11 +1442,11 @@ export const CrossyRoadGame: React.FC = () => {
           <span>按 W / ↑ 前進，A/D ← → 轉向，S / ↓ 後退 · 點擊畫面亦可跳躍</span>
         </div>
 
-        {/* Traffic Light & Color Timer Rule Reminder Pill */}
+        {/* Traffic Light, Speed & Color Timer Rule Reminder Pill */}
         <div className="absolute top-4 right-4 bg-slate-950/85 border border-slate-800 text-[11px] px-3 py-1.5 rounded-lg backdrop-blur-md pointer-events-none hidden md:flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-500" />
           <span className="text-slate-300">紅燈跨越：</span>
-          <span className="text-red-400 font-bold">-1 金幣</span>
+          <span className="text-red-400 font-bold">-1 金幣 · 車速x1.1</span>
           <span className="text-slate-600">|</span>
           <Timer className="w-3 h-3 text-amber-400" />
           <span className="text-slate-300">同色限時：</span>
@@ -1427,6 +1468,11 @@ export const CrossyRoadGame: React.FC = () => {
                 {gameOverReason.includes('20 秒') && (
                   <p className="text-xs text-amber-300 font-medium pt-1">
                     ⚠️ 規則提醒：在同一顏色區域不可逗留超過 20 秒，請持續前進並變換不同顏色地形！
+                  </p>
+                )}
+                {gameOverReason.includes('車輛') && speedMultiplier > 1.0 && (
+                  <p className="text-xs text-amber-400 font-medium pt-1">
+                    ⚡ 警告：闖紅燈已使全場車速加快至 {speedMultiplier.toFixed(2)} 倍，過馬路更顯兇險！
                   </p>
                 )}
               </div>
@@ -1459,6 +1505,10 @@ export const CrossyRoadGame: React.FC = () => {
                   <span>最後地形: <strong className={currentZoneStyle.textColor}>{currentZoneStyle.label}</strong></span>
                   <span>同色區域限時: <strong className="text-slate-200">20.0 秒</strong></span>
                 </div>
+                <div className="col-span-2 pt-1 flex justify-between text-xs text-slate-400">
+                  <span>車輛最終速度: <strong className={speedMultiplier > 1.0 ? 'text-amber-400' : 'text-slate-300'}>{speedMultiplier.toFixed(2)}x</strong></span>
+                  <span>闖紅燈加速懲罰: <strong className="text-amber-300">每次 x1.1</strong></span>
+                </div>
               </div>
 
               {/* Restart Button */}
@@ -1477,11 +1527,18 @@ export const CrossyRoadGame: React.FC = () => {
       {/* 4. Bottom Controls / Virtual D-Pad for Mobile & Touch */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-950/90 border-t border-slate-800 z-10">
         {/* Violation & Safety Stats Summary */}
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
             <span className="text-slate-400">闖紅燈違規:</span>
             <span className="font-mono font-bold text-red-400">{redLightViolations} 次</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Zap className={`w-3.5 h-3.5 ${speedMultiplier > 1.0 ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`} />
+            <span className="text-slate-400">車速倍率:</span>
+            <span className={`font-mono font-bold ${speedMultiplier > 1.0 ? 'text-amber-400' : 'text-slate-300'}`}>
+              {speedMultiplier.toFixed(2)}x
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />

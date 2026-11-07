@@ -75,9 +75,9 @@ export default function App() {
               <div className="flex items-center gap-2 text-[11px] text-slate-400">
                 <span>黑犬紅項圈體素主角</span>
                 <span aria-hidden="true">·</span>
-                <span>紅燈跨越扣 1 金幣</span>
+                <span>紅燈跨越扣 1 金幣並加速 1.1x</span>
                 <span aria-hidden="true">·</span>
-                <span>黃綠燈安全不扣幣</span>
+                <span>同色區域限時 20 秒</span>
               </div>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function App() {
                 <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
                 <div>
                   <div className="font-bold text-red-300">🔴 紅燈跨越馬路</div>
-                  <div className="text-[11px] text-red-400/80 mt-0.5">每次扣除 1 金幣 ⚠️</div>
+                  <div className="text-[11px] text-red-400/80 mt-0.5">扣 1 金幣 · 全場車速加快 1.1 倍 ⚡</div>
                 </div>
               </div>
 
@@ -236,7 +236,7 @@ export default function App() {
                 <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
                   <div className="font-bold text-emerald-300">🟢 綠燈 / 🟡 黃燈跨越</div>
-                  <div className="text-[11px] text-emerald-400/80 mt-0.5">安全通行，不扣金幣 ✓</div>
+                  <div className="text-[11px] text-emerald-400/80 mt-0.5">安全通行，不扣金幣不加速 ✓</div>
                 </div>
               </div>
 
@@ -261,10 +261,10 @@ export default function App() {
               <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
                 <div className="text-xs font-semibold text-slate-200 mb-1 flex items-center gap-1.5">
                   <Coins className="w-4 h-4 text-amber-400" />
-                  <span>金幣與紅綠燈機制 (Traffic Light Rules)</span>
+                  <span>金幣與紅燈加速機制 (Traffic Light & Speed Penalty)</span>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  每條馬路右側均有紅綠燈立柱（綠燈 5 秒、黃燈 1.8 秒、紅燈 4 秒）。紅燈亮起時跳入馬路會被扣除 1 金幣並觸發違規警報；黃燈與綠燈跨越則免受罰款！
+                  每條馬路右側均有紅綠燈立柱（綠燈 5 秒、黃燈 1.8 秒、紅燈 4 秒）。紅燈亮起時跳入馬路會被<strong>扣除 1 金幣</strong>，且<strong>全場車輛速度累計加快 1.1 倍</strong>！黃燈與綠燈跨越則安全免罰。
                 </p>
               </div>
 
